@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import axios from "axios";
-import Employees from "./pages/employees.jsx";
+import Employees from "./pages/Employees.jsx";
 import Pods from "./pages/pods.jsx";
 import BrandsProcesses from "./pages/BrandsProcesses.jsx";
 import Assignments from "./pages/Assignments.jsx";
