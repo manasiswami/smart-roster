@@ -60,25 +60,29 @@ View schedules at different levels:
 ## Technology Stack
 
 ### Frontend
-- React
+- React 19
 - Vite
 - JavaScript
-- CSS
+- Tailwind CSS 4
+- React Router
+- Axios
+- Lucide React
 
 ### Backend
 - Node.js
-- Express.js
+- Express 5
 - JavaScript
+- REST API
 
 ### Database & ORM
 - PostgreSQL
-- Prisma ORM
+- Prisma ORM 6
 
 ### Development Tools
 - Git & GitHub
 - npm
 - VS Code
-
+  
 ## Project Structure
 
 ```text
@@ -136,7 +140,6 @@ cd smart-roster
 cd Server
 npm install
 ```
-
 Create a `.env` file inside the `Server` directory.
 
 Configure your PostgreSQL connection:
@@ -150,19 +153,15 @@ Replace the placeholders with your local PostgreSQL credentials and database nam
 ### 3. Database Setup
 
 Generate the Prisma client:
-
 ```bash
 npx prisma generate
 ```
 
 Apply database migrations:
-
 ```bash
 npx prisma migrate dev
 ```
-
 Seed the database with sample data:
-
 ```bash
 node prisma/seed.js
 node prisma/seed-operating-rules.js
@@ -174,13 +173,11 @@ node prisma/seed-weekly-offs.js
 ```bash
 npm run dev
 ```
-
 The backend API runs at:
 
 ```text
 http://localhost:5000
 ```
-
 Health endpoint:
 
 ```text
@@ -195,7 +192,6 @@ Open another terminal:
 cd Client
 npm install
 ```
-
 Start the frontend:
 
 ```bash
