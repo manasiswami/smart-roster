@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import axios from "axios";
 import Employees from "./pages/Employees.jsx";
-import Pods from "./pages/pods.jsx";
+import Pods from "./pages/Pods.jsx";
 import BrandsProcesses from "./pages/BrandsProcesses.jsx";
 import Assignments from "./pages/Assignments.jsx";
 import SchedulingAvailability from "./pages/SchedulingAvailability.jsx";
