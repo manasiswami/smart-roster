@@ -1,0 +1,352 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ---------- ENUMS ----------
+
+enum EmployeeStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum AssignmentStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum LeaveType {
+  PLANNED
+  SICK
+  COMP_OFF
+}
+
+enum LeaveStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum RosterStatus {
+  DRAFT
+  GENERATED
+  PUBLISHED
+}
+
+enum RosterDayStatus {
+  WORKING
+  WEEKLY_OFF
+  HOLIDAY
+  LEAVE
+  COMP_OFF
+  UNAVAILABLE
+}
+
+enum ConflictSeverity {
+  WARNING
+  ERROR
+}
+
+// ---------- POD ----------
+
+model Pod {
+  id   String @id @default(uuid())
+  name String @unique
+
+  leadId String?   @unique
+  lead   Employee? @relation("PodLead", fields: [leadId], references: [id])
+
+  employees Employee[] @relation("PodEmployees")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ---------- EMPLOYEE ----------
+
+model Employee {
+  id           String         @id @default(uuid())
+  employeeCode String         @unique
+  firstName    String
+  lastName     String
+  email        String         @unique
+  phone        String?
+  status       EmployeeStatus @default(ACTIVE)
+
+  podId String
+  pod   Pod    @relation("PodEmployees", fields: [podId], references: [id])
+
+  ledPod Pod? @relation("PodLead")
+
+  assignments         EmployeeAssignment[]
+  availability        EmployeeAvailability[]
+  weeklyOffs          WeeklyOff[]
+  leaves              Leave[]
+  rosterDays          EmployeeRosterDay[]
+  schedulingConflicts SchedulingConflict[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ---------- BRAND ----------
+
+model Brand {
+  id          String  @id @default(uuid())
+  name        String  @unique
+  description String?
+  isActive    Boolean @default(true)
+
+  processes BrandProcess[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ---------- PROCESS ----------
+
+model Process {
+  id          String  @id @default(uuid())
+  name        String  @unique
+  description String?
+  isActive    Boolean @default(true)
+
+  brandProcesses BrandProcess[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ---------- BRAND PROCESS ----------
+
+model BrandProcess {
+  id String @id @default(uuid())
+
+  brandId String
+  brand   Brand  @relation(fields: [brandId], references: [id])
+
+  processId String
+  process   Process @relation(fields: [processId], references: [id])
+
+  isActive                 Boolean @default(true)
+  operatesOnPublicHolidays Boolean @default(false)
+
+  assignments         EmployeeAssignment[]
+  operatingRules      OperatingRule[]
+  operatingExceptions OperatingException[]
+  schedulingConflicts SchedulingConflict[]
+
+  @@unique([brandId, processId])
+}
+
+// ---------- EMPLOYEE ASSIGNMENT ----------
+
+model EmployeeAssignment {
+  id String @id @default(uuid())
+
+  employeeId String
+  employee   Employee @relation(fields: [employeeId], references: [id])
+
+  brandProcessId String
+  brandProcess   BrandProcess @relation(fields: [brandProcessId], references: [id])
+
+  status    AssignmentStatus @default(ACTIVE)
+  startDate DateTime         @default(now()) @db.Date
+  endDate   DateTime?        @db.Date
+
+  allocations RosterAllocation[]
+
+  @@index([employeeId, brandProcessId])
+  @@index([brandProcessId, status])
+}
+
+// ---------- OPERATING RULES ----------
+
+model OperatingRule {
+  id String @id @default(uuid())
+
+  brandProcessId String
+  brandProcess   BrandProcess @relation(fields: [brandProcessId], references: [id])
+
+  // 0 = Sunday, 1 = Monday, ... 6 = Saturday
+  dayOfWeek    Int
+  isOperating  Boolean @default(true)
+  minimumStaff Int     @default(1)
+
+  @@unique([brandProcessId, dayOfWeek])
+}
+
+// ---------- OPERATING EXCEPTIONS ----------
+
+model OperatingException {
+  id String @id @default(uuid())
+
+  brandProcessId String
+  brandProcess   BrandProcess @relation(fields: [brandProcessId], references: [id])
+
+  date         DateTime @db.Date
+  isOperating  Boolean
+  minimumStaff Int?
+  reason       String?
+
+  @@unique([brandProcessId, date])
+}
+
+// ---------- EMPLOYEE AVAILABILITY ----------
+
+model EmployeeAvailability {
+  id String @id @default(uuid())
+
+  employeeId String
+  employee   Employee @relation(fields: [employeeId], references: [id])
+
+  date        DateTime @db.Date
+  isAvailable Boolean  @default(true)
+  reason      String?
+
+  @@unique([employeeId, date])
+}
+
+// ---------- WEEKLY OFF ----------
+
+model WeeklyOff {
+  id String @id @default(uuid())
+
+  employeeId String
+  employee   Employee @relation(fields: [employeeId], references: [id])
+
+  // 0 = Sunday, 1 = Monday, ... 6 = Saturday
+  dayOfWeek Int
+
+  @@unique([employeeId, dayOfWeek])
+}
+
+// ---------- LEAVE ----------
+
+model Leave {
+  id String @id @default(uuid())
+
+  employeeId String
+  employee   Employee @relation(fields: [employeeId], references: [id])
+
+  type      LeaveType
+  status    LeaveStatus @default(PENDING)
+  startDate DateTime    @db.Date
+  endDate   DateTime    @db.Date
+  reason    String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([employeeId, startDate, endDate])
+}
+
+// ---------- PUBLIC HOLIDAYS ----------
+
+model Holiday {
+  id   String   @id @default(uuid())
+  name String
+  date DateTime @unique @db.Date
+}
+
+// ---------- SHIFTS ----------
+
+model Shift {
+  id        String  @id @default(uuid())
+  name      String  @unique
+  startTime String
+  endTime   String
+  isActive  Boolean @default(true)
+
+  allocations RosterAllocation[]
+}
+
+// ---------- ROSTER ----------
+
+model Roster {
+  id      String       @id @default(uuid())
+  month   Int
+  year    Int
+  version Int          @default(1)
+  status  RosterStatus @default(DRAFT)
+
+  rosterDays EmployeeRosterDay[]
+  conflicts  SchedulingConflict[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([year, month, version])
+  @@index([year, month, status])
+}
+
+// ---------- EMPLOYEE ROSTER DAY ----------
+
+model EmployeeRosterDay {
+  id String @id @default(uuid())
+
+  rosterId String
+  roster   Roster @relation(fields: [rosterId], references: [id])
+
+  employeeId String
+  employee   Employee @relation(fields: [employeeId], references: [id])
+
+  date   DateTime        @db.Date
+  status RosterDayStatus @default(WORKING)
+
+  allocations RosterAllocation[]
+
+  @@unique([rosterId, employeeId, date])
+  @@index([employeeId, date])
+}
+
+// ---------- ROSTER ALLOCATION ----------
+
+model RosterAllocation {
+  id String @id @default(uuid())
+
+  rosterDayId String
+  rosterDay   EmployeeRosterDay @relation(fields: [rosterDayId], references: [id])
+
+  assignmentId String
+  assignment   EmployeeAssignment @relation(fields: [assignmentId], references: [id])
+
+  shiftId String?
+  shift   Shift?  @relation(fields: [shiftId], references: [id])
+
+  @@unique([rosterDayId, assignmentId])
+  @@index([assignmentId])
+}
+
+// ---------- SCHEDULING CONFLICT ----------
+
+model SchedulingConflict {
+  id String @id @default(uuid())
+
+  rosterId String
+  roster   Roster @relation(fields: [rosterId], references: [id])
+
+  employeeId String?
+  employee   Employee? @relation(fields: [employeeId], references: [id])
+
+  brandProcessId String?
+  brandProcess   BrandProcess? @relation(fields: [brandProcessId], references: [id])
+
+  date           DateTime         @db.Date
+  severity       ConflictSeverity
+  code           String
+  message        String
+  isResolved     Boolean          @default(false)
+  resolutionNote String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([rosterId, date])
+  @@index([employeeId, date])
+  @@index([brandProcessId, date])
+}

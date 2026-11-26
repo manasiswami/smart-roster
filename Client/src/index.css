@@ -1,0 +1,51 @@
+
+@import "tailwindcss";
+
+@theme {
+  --color-corporate-navy: #173653;
+  --color-corporate-blue: #28577C;
+  --color-corporate-hover: #244863;
+  --color-corporate-teal: #168F8B;
+
+  --color-page: #F1F4F8;
+  --color-surface: #FFFFFF;
+  --color-ink: #18334F;
+  --color-muted: #718096;
+  --color-border: #E1E7EF;
+  --color-teal-soft: #E7F4F2;
+
+  --color-info: #2563EB;
+  --color-warning: #D97706;
+  --color-danger: #DC2626;
+  --color-success: #16A34A;
+}
+
+:root {
+  font-family: Inter, "Segoe UI", Arial, sans-serif;
+  color: #18334F;
+  background: #F1F4F8;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+  background: #F1F4F8;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
