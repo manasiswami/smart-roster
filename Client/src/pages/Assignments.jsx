@@ -17,7 +17,7 @@ import {
   X,
 } from "lucide-react";
 
-const API = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+const API = import.meta.env.SERVER_URL || "http://localhost:5000/api";
 const PAGE_SIZE = 8;
 const INPUT_CLASS =
   "mt-1.5 w-full rounded-lg border border-[#D9E2EC] bg-white px-3 py-2.5 text-sm text-[#18334F] outline-none transition placeholder:text-[#9AA8B7] focus:border-[#168F8B] focus:ring-3 focus:ring-[#168F8B]/10";
