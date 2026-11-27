@@ -10,8 +10,13 @@ The application supports roster planning for a team of 30+ employees while consi
 
 The goal is to make monthly roster planning more structured, reduce manual scheduling effort, and help identify staffing gaps before they affect operations.
 
-## Features
+## Live Demo
 
+- Frontend: https://smart-roster-gamma.vercel.app/
+- Backend Health: https://smart-roster-blxh.onrender.com/api/health
+- GitHub Repository: https://github.com/manasiswami/smart-roster
+ 
+## Features
 ### Team & Resource Management
 - Manage employees and their status.
 - Organize employees into operational pods.
@@ -19,13 +24,20 @@ The goal is to make monthly roster planning more structured, reduce manual sched
 - Manage brands and operational processes.
 - Configure employee assignments across brands and processes.
 
-### Scheduling Configuration
-- Configure operating rules for each brand-process combination.
-- Define minimum staffing requirements.
-- Manage employee weekly offs.
-- Track employee availability.
-- Manage planned leaves, sick leaves, and comp-offs.
-- Configure public holidays.
+### Scheduling Decisions
+
+The roster generation system prioritizes employee eligibility,
+availability, weekly offs, leave records, operating rules,
+and staffing requirements.
+
+The system identifies coverage gaps when staffing requirements
+cannot be satisfied with the available eligible employees.
+
+Instead of silently ignoring scheduling constraints, the system
+records conflicts so administrators can review and take corrective action.
+
+Manual allocation changes can be revalidated to identify
+their impact on staffing coverage and roster validity.
 
 ### Monthly Roster Generation
 - Generate monthly rosters for the team.
