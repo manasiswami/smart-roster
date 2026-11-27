@@ -251,9 +251,8 @@ async function generateMonthlyRoster(month, year) {
           });
         }
       }
-
-      // Create one roster day for each active employee.
-      for (const employee of employees) {
+              // Prepare roster days for all active employees for this date.
+      const rosterDayData = employees.map((employee) => {
         const employeeId = employee.id;
 
         const approvedLeave = leaves.find(
@@ -282,35 +281,72 @@ async function generateMonthlyRoster(month, year) {
         let status = "WORKING";
 
         if (approvedLeave) {
-          status = approvedLeave.type === "COMP_OFF"
-            ? "COMP_OFF"
-            : "LEAVE";
+          status =
+            approvedLeave.type === "COMP_OFF"
+              ? "COMP_OFF"
+              : "LEAVE";
         } else if (weeklyOff) {
           status = "WEEKLY_OFF";
         } else if (unavailable) {
           status = "UNAVAILABLE";
-        } else if (isHoliday && employeeAssignments.length === 0) {
+        } else if (
+          isHoliday &&
+          employeeAssignments.length === 0
+        ) {
           status = "HOLIDAY";
         }
 
-        const rosterDay = await tx.employeeRosterDay.create({
-          data: {
-            rosterId: roster.id,
-            employeeId,
-            date,
-            status,
+        return {
+          rosterId: roster.id,
+          employeeId,
+          date,
+          status,
+        };
+      });
+
+      // Insert all employee roster days in one database operation.
+      const createdRosterDays =
+        await tx.employeeRosterDay.createManyAndReturn({
+          data: rosterDayData,
+          select: {
+            id: true,
+            employeeId: true,
           },
         });
 
-        // Save all selected process allocations for this employee.
-        if (employeeAssignments.length > 0) {
-          await tx.rosterAllocation.createMany({
-            data: employeeAssignments.map((assignment) => ({
-              rosterDayId: rosterDay.id,
-              assignmentId: assignment.id,
-            })),
+      // Map employee IDs to their newly created roster-day IDs.
+      const rosterDayIdByEmployee = new Map(
+        createdRosterDays.map((rosterDay) => [
+          rosterDay.employeeId,
+          rosterDay.id,
+        ])
+      );
+
+      // Prepare all allocations for this date.
+      const allocationData = [];
+
+      for (const employee of employees) {
+        const employeeAssignments =
+          dailyAssignments.get(employee.id);
+
+        if (employeeAssignments.length === 0) continue;
+
+        const rosterDayId =
+          rosterDayIdByEmployee.get(employee.id);
+
+        for (const assignment of employeeAssignments) {
+          allocationData.push({
+            rosterDayId,
+            assignmentId: assignment.id,
           });
         }
+      }
+
+      // Insert all allocations in one database operation.
+      if (allocationData.length > 0) {
+        await tx.rosterAllocation.createMany({
+          data: allocationData,
+        });
       }
     }
 
@@ -337,6 +373,9 @@ async function generateMonthlyRoster(month, year) {
       conflictCount: conflicts.length,
       conflicts,
     };
+    }, {
+    maxWait: 15000,
+    timeout: 120000,
   });
 }
 
